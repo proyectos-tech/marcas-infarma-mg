@@ -1100,7 +1100,12 @@
       const STORAGE_KEY = 'infarma_brands_control_v1';
 
       // Global state
+      // Google Sheets Configuration
+      const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhhW44UaiuKnqhIoyAXCogzPUUAr8dgK2rmQBFqnAZFncoR5gtRScmUB7sMukUcVCw9w/exec';
+      const USE_GOOGLE_SHEETS = true; // Cambiar a false para usar localStorage
+      
       let brands = [];
+      let isLoading = false;
       let editingId = null;
       let currentBrandPhoto = null;
       let currentLegalDoc = null;
@@ -1186,7 +1191,164 @@
         }
       }
 
-      // Get status badge
+
+      // ============================================================================
+      // GOOGLE SHEETS API FUNCTIONS
+      // ============================================================================
+
+      // Show loading indicator
+      function showLoading(message = 'Cargando...') {
+        isLoading = true;
+        const overlay = document.createElement('div');
+        overlay.id = 'loading-overlay';
+        overlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+        `;
+        overlay.innerHTML = `
+          <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
+            <div style="font-size: 18px; margin-bottom: 10px;">${message}</div>
+            <div style="font-size: 14px; color: #666;">Por favor espera...</div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+
+      function hideLoading() {
+        isLoading = false;
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+          overlay.remove();
+        }
+      }
+
+      // Read brands from Google Sheets
+      async function loadBrandsFromSheet() {
+        if (!USE_GOOGLE_SHEETS) {
+          loadBrandsFromLocalStorage();
+          return;
+        }
+
+        try {
+          showLoading('Cargando marcas desde Google Sheets...');
+          const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=read`);
+          const result = await response.json();
+
+          if (result.success) {
+            brands = result.data.map(brand => {
+              // Asegurar que cada marca tenga un ID único
+              if (!brand.id) {
+                brand.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+              }
+              return brand;
+            });
+            
+            console.log(`Cargadas ${brands.length} marcas desde Google Sheets`);
+            renderTable();
+            updateStats();
+            populateFilters();
+          } else {
+            console.error('Error al cargar datos:', result.error);
+            alert('Error al cargar datos de Google Sheets. Usando datos locales.');
+            loadBrandsFromLocalStorage();
+          }
+        } catch (error) {
+          console.error('Error loading brands:', error);
+          alert('Error de conexión con Google Sheets. Usando datos locales.');
+          loadBrandsFromLocalStorage();
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // Save brand to Google Sheets
+      async function saveBrandToSheet(brand) {
+        if (!USE_GOOGLE_SHEETS) {
+          return true;
+        }
+
+        try {
+          const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'add', ...brand})
+          });
+          const result = await response.json();
+          return result.success;
+        } catch (error) {
+          console.error('Error saving brand:', error);
+          return false;
+        }
+      }
+
+      // Update brand in Google Sheets
+      async function updateBrandInSheet(brand) {
+        if (!USE_GOOGLE_SHEETS) {
+          return true;
+        }
+
+        try {
+          const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'update', ...brand})
+          });
+          const result = await response.json();
+          return result.success;
+        } catch (error) {
+          console.error('Error updating brand:', error);
+          return false;
+        }
+      }
+
+      // Delete brand from Google Sheets
+      async function deleteBrandFromSheet(brandId) {
+        if (!USE_GOOGLE_SHEETS) {
+          return true;
+        }
+
+        try {
+          const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'delete', id: brandId})
+          });
+          const result = await response.json();
+          return result.success;
+        } catch (error) {
+          console.error('Error deleting brand:', error);
+          return false;
+        }
+      }
+
+      // Fallback: Load from localStorage
+      function loadBrandsFromLocalStorage() {
+        const stored = localStorage.getItem('brands');
+        if (stored) {
+          brands = JSON.parse(stored);
+          renderTable();
+          updateStats();
+          populateFilters();
+        }
+      }
+
+      // Auto-refresh every 30 seconds
+      setInterval(async () => {
+        if (USE_GOOGLE_SHEETS && !isLoading) {
+          await loadBrandsFromSheet();
+        }
+      }, 30000);
+
+
+            // Get status badge
       function getStatusBadge(status) {
         const badges = {
           'Activo': 'badge-success',
@@ -1474,7 +1636,7 @@
       }
 
       // Save brand
-      function saveBrand() {
+      async function saveBrand() {
         const productName = document.getElementById('productName').value.trim();
 
         if (!productName) {
@@ -1503,37 +1665,81 @@
           updatedAt: new Date().toISOString()
         };
 
-        if (editingId) {
-          const index = brands.findIndex(b => b.id === editingId);
-          if (index !== -1) {
-            brands[index] = brand;
+        showLoading(editingId ? 'Actualizando marca...' : 'Guardando marca...');
+
+        let success = false;
+        if (USE_GOOGLE_SHEETS) {
+          if (editingId) {
+            success = await updateBrandInSheet(brand);
+          } else {
+            success = await saveBrandToSheet(brand);
           }
         } else {
-          brands.unshift(brand);
+          success = true;
         }
 
-        saveBrands();
-        populateFilters();
-        renderTable();
-        updateStats();
-        closeModal();
+        if (success) {
+          if (editingId) {
+            const index = brands.findIndex(b => b.id === editingId);
+            if (index !== -1) {
+              brands[index] = brand;
+            }
+          } else {
+            brands.unshift(brand);
+          }
 
-        alert(editingId ? 'Marca actualizada exitosamente' : 'Marca agregada exitosamente');
+          saveBrands(); // También guardar en localStorage como backup
+          populateFilters();
+          renderTable();
+          updateStats();
+          closeModal();
+          hideLoading();
+
+          alert(editingId ? 'Marca actualizada exitosamente' : 'Marca agregada exitosamente');
+          
+          // Reload from Google Sheets to sync
+          if (USE_GOOGLE_SHEETS) {
+            await loadBrandsFromSheet();
+          }
+        } else {
+          hideLoading();
+          alert('Error al guardar la marca. Por favor intente nuevamente.');
+        }
       }
 
       // Delete brand
-      function deleteBrand(id) {
+      async function deleteBrand(id) {
         if (!confirm('¿Está seguro de eliminar esta marca? Esta acción no se puede deshacer.')) {
           return;
         }
 
-        brands = brands.filter(b => b.id !== id);
-        saveBrands();
-        populateFilters();
-        renderTable();
-        updateStats();
+        showLoading('Eliminando marca...');
 
-        alert('Marca eliminada exitosamente');
+        let success = false;
+        if (USE_GOOGLE_SHEETS) {
+          success = await deleteBrandFromSheet(id);
+        } else {
+          success = true;
+        }
+
+        if (success) {
+          brands = brands.filter(b => b.id !== id);
+          saveBrands(); // También eliminar de localStorage
+          populateFilters();
+          renderTable();
+          updateStats();
+          hideLoading();
+
+          alert('Marca eliminada exitosamente');
+          
+          // Reload from Google Sheets to sync
+          if (USE_GOOGLE_SHEETS) {
+            await loadBrandsFromSheet();
+          }
+        } else {
+          hideLoading();
+          alert('Error al eliminar la marca. Por favor intente nuevamente.');
+        }
       }
 
       // Download functions
