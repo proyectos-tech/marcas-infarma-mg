@@ -1010,7 +1010,7 @@
       // Google Sheets Configuration
       const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhhW44UaiuKnqhIoyAXCogzPUUAr8dgK2rmQBFqnAZFncoR5gtRScmUB7sMukUcVCw9w/exec';
       const USE_GOOGLE_SHEETS = true; // Cambiar a false para usar localStorage
-      
+
       let brands = [];
       let isLoading = false;
       let editingId = null;
@@ -1157,7 +1157,7 @@
               }
               return brand;
             });
-            
+
             console.log(`Cargadas ${brands.length} marcas desde Google Sheets`);
             renderTable();
             updateStats();
@@ -1185,8 +1185,8 @@
         try {
           const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action: 'add', ...brand})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'add', ...brand })
           });
           const result = await response.json();
           return result.success;
@@ -1205,8 +1205,8 @@
         try {
           const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action: 'update', ...brand})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'update', ...brand })
           });
           const result = await response.json();
           return result.success;
@@ -1225,8 +1225,8 @@
         try {
           const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action: 'delete', id: brandId})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', id: brandId })
           });
           const result = await response.json();
           return result.success;
@@ -1255,7 +1255,7 @@
       }, 30000);
 
 
-            // Get status badge
+      // Get status badge
       function getStatusBadge(status) {
         const badges = {
           'Activo': 'badge-success',
@@ -1310,9 +1310,9 @@
         }
 
         emptyState.style.display = 'none';
-        
+
         // Check if viewer mode
-tbody.innerHTML = filteredBrands.map(brand => {
+        tbody.innerHTML = filteredBrands.map(brand => {
           const status = getBrandStatus(brand);
           return `
       <tr>
@@ -1324,8 +1324,8 @@ tbody.innerHTML = filteredBrands.map(brand => {
         <td>\${formatDate(brand.expirationDate)}</td>
         <td>\${getStatusBadge(status)}</td>
         <td>\${brand.lawFirm || 'N/A'}</td>
-        <td>\${brand.brandPhoto ? `<img src="\${brand.brandPhoto}" class="image-thumbnail" onclick="showLightbox('\${brand.brandPhoto}')">` : '<div class="no-image">Sin foto</div>'}</td>
-        <td>\${brand.legalDoc ? `<img src="\${brand.legalDoc}" class="image-thumbnail" onclick="showLightbox('\${brand.legalDoc}')">` : '<div class="no-image">Sin doc</div>'}</td>
+        <td>\${brand.brandPhoto ? `< img src = "\${brand.brandPhoto}" class="image-thumbnail" onclick = "showLightbox('\${brand.brandPhoto}')" > ` : '<div class="no-image">Sin foto</div>'}</td>
+        <td>\${brand.legalDoc ? `< img src = "\${brand.legalDoc}" class="image-thumbnail" onclick = "showLightbox('\${brand.legalDoc}')" > ` : '<div class="no-image">Sin doc</div>'}</td>
         <td>
           <div class="action-btns">
             <button class="icon-btn" onclick="downloadBrandImage('\${brand.id}')" title="Descargar Foto">📥</button>
@@ -1601,7 +1601,7 @@ tbody.innerHTML = filteredBrands.map(brand => {
           hideLoading();
 
           alert(editingId ? 'Marca actualizada exitosamente' : 'Marca agregada exitosamente');
-          
+
           // Reload from Google Sheets to sync
           if (USE_GOOGLE_SHEETS) {
             await loadBrandsFromSheet();
@@ -1636,7 +1636,7 @@ tbody.innerHTML = filteredBrands.map(brand => {
           hideLoading();
 
           alert('Marca eliminada exitosamente');
-          
+
           // Reload from Google Sheets to sync
           if (USE_GOOGLE_SHEETS) {
             await loadBrandsFromSheet();
@@ -1654,22 +1654,22 @@ tbody.innerHTML = filteredBrands.map(brand => {
           alert('No hay foto de marca disponible para descargar');
           return;
         }
-        
+
         downloadBase64File(brand.brandPhoto, `${brand.productName || 'marca'}_foto.jpg`);
       }
-      
+
       function downloadLegalDoc(brandId) {
         const brand = brands.find(b => b.id === brandId);
         if (!brand || !brand.legalDoc) {
           alert('No hay documento legal disponible para descargar');
           return;
         }
-        
+
         // Determinar extensión basado en el formato del base64
         const ext = brand.legalDoc.startsWith('data:application/pdf') ? 'pdf' : 'jpg';
         downloadBase64File(brand.legalDoc, `${brand.productName || 'marca'}_legal.${ext}`);
       }
-      
+
       function downloadBase64File(base64Data, filename) {
         // Convert base64 to blob
         const arr = base64Data.split(',');
@@ -1680,8 +1680,8 @@ tbody.innerHTML = filteredBrands.map(brand => {
         while (n--) {
           u8arr[n] = bstr.charCodeAt(n);
         }
-        const blob = new Blob([u8arr], {type: mime});
-        
+        const blob = new Blob([u8arr], { type: mime });
+
         // Create download link
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -1895,68 +1895,8 @@ tbody.innerHTML = filteredBrands.map(brand => {
 
   </div><!-- Fin de main-content -->
 
-  <script>
-    // Password protection logic
-     else if (password === viewerPassword) {
-        userRole = 'viewer';
-      }
-      
-      if (userRole) {
-        // Password correct - show main content
-        document.getElementById('password-screen').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        
-        // Store authentication and role in session
-        sessionStorage.setItem('authenticated', 'true');
-        sessionStorage.setItem('userRole', userRole);
-        
-        // Update UI based on role
-        updateUIForUserRole(userRole);
+  
 
-      } else {
-        // Password incorrect - show error
-        document.getElementById('error-message').style.display = 'block';
-        document.getElementById('password-input').value = '';
-        document.getElementById('password-input').focus();
-
-        // Shake animation
-        const form = event.target;
-        form.style.animation = 'shake 0.5s';
-        setTimeout(() => {
-          form.style.animation = '';
-        }, 500);
-      }
-    }
-
-    // Update UI based on user role
-     else {
-        window.isViewerMode = false;
-      }
-    }
-
-    // Check if already authenticated in this session
-    window.addEventListener('DOMContentLoaded', () => {
-      const authenticated = sessionStorage.getItem('authenticated');
-      const userRole = sessionStorage.getItem('userRole');
-
-      if (authenticated === 'true' && userRole) {
-        document.getElementById('password-screen').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        updateUIForUserRole(userRole);
-      }
-    });
-
-    // Add shake animation
-    const style = document.createElement('style');
-    style.textContent = `
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-    20%, 40%, 60%, 80% { transform: translateX(10px); }
-  }
-`;
-    document.head.appendChild(style);
-  </script>
 
 </body>
 
