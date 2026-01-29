@@ -731,100 +731,7 @@
 <body>
 
   <!-- Password Protection -->
-  <div id="password-screen" style="
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(135deg, #0c4a6e 0%, #0ea5e9 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-">
-    <div style="
-    background: white;
-    border-radius: 20px;
-    padding: 48px;
-    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.3);
-    max-width: 400px;
-    width: 90%;
-  ">
-      <div style="
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, #0c4a6e 0%, #0ea5e9 100%);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      margin: 0 auto 24px;
-      box-shadow: 0 8px 20px rgba(12, 74, 110, 0.3);
-    ">💊</div>
-
-      <h2 style="
-      font-size: 24px;
-      font-weight: 900;
-      text-align: center;
-      margin-bottom: 8px;
-      color: #0c4a6e;
-    ">Password protected site</h2>
-
-      <p style="
-      text-align: center;
-      color: #64748b;
-      font-size: 14px;
-      margin-bottom: 32px;
-    ">Please enter your password to gain access.</p>
-
-      <form onsubmit="checkPassword(event)" style="display: flex; flex-direction: column; gap: 16px;">
-        <div>
-          <label for="password-input" style="
-          font-size: 12px;
-          font-weight: 700;
-          color: #0f172a;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 8px;
-          display: block;
-        ">Password</label>
-          <input type="password" id="password-input" placeholder="Enter password" style="
-            width: 100%;
-            padding: 12px 14px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 14px;
-            font-family: 'DM Sans', sans-serif;
-          " required autofocus />
-        </div>
-
-        <div id="error-message" style="
-        color: #ef4444;
-        font-size: 13px;
-        font-weight: 600;
-        text-align: center;
-        display: none;
-      ">❌ Incorrect password</div>
-
-        <button type="submit" class="btn btn-primary" style="
-        width: 100%;
-        padding: 14px 24px;
-        border: none;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #0c4a6e 0%, #0ea5e9 100%);
-        color: white;
-        font-weight: 700;
-        font-size: 14px;
-        cursor: pointer;
-        font-family: 'DM Sans', sans-serif;
-        box-shadow: 0 4px 12px rgba(12, 74, 110, 0.3);
-        transition: all 0.3s ease;
-      " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(12, 74, 110, 0.4)';"
-          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(12, 74, 110, 0.3)';">Submit</button>
-      </form>
-    </div>
-  </div>
-
-  <div id="main-content" style="display: none;">
+  <div id="main-content">
 
     <!-- Header -->
     <div class="container">
@@ -1405,9 +1312,7 @@
         emptyState.style.display = 'none';
         
         // Check if viewer mode
-        const isViewer = window.isViewerMode === true;
-
-        tbody.innerHTML = filteredBrands.map(brand => {
+tbody.innerHTML = filteredBrands.map(brand => {
           const status = getBrandStatus(brand);
           return `
       <tr>
@@ -1428,7 +1333,7 @@
           </div>
         </td>
         <td>
-          <div class="action-btns" style="display: ${isViewer ? 'none' : 'flex'}">
+          <div class="action-btns" style="display: flex">
             <button class="icon-btn edit-btn" onclick="editBrand('\${brand.id}')" title="Editar">✏️</button>
             <button class="icon-btn danger delete-btn" onclick="deleteBrand('\${brand.id}')" title="Eliminar">🗑️</button>
           </div>
@@ -1992,18 +1897,7 @@
 
   <script>
     // Password protection logic
-    function checkPassword(event) {
-      event.preventDefault();
-
-      const password = document.getElementById('password-input').value;
-      const editorPassword = 'Infarma2026!';
-      const viewerPassword = 'InfarmaView2026!';
-      
-      let userRole = null;
-      
-      if (password === editorPassword) {
-        userRole = 'editor';
-      } else if (password === viewerPassword) {
+     else if (password === viewerPassword) {
         userRole = 'viewer';
       }
       
@@ -2035,17 +1929,7 @@
     }
 
     // Update UI based on user role
-    function updateUIForUserRole(role) {
-      if (role === 'viewer') {
-        // Hide editor-only buttons
-        const addButton = document.querySelector('button[onclick="openAddModal()"]');
-        const importButton = document.querySelector('button[onclick="importFromExcel()"]');
-        if (addButton) addButton.style.display = 'none';
-        if (importButton) importButton.style.display = 'none';
-
-        // Will hide edit/delete buttons when table renders
-        window.isViewerMode = true;
-      } else {
+     else {
         window.isViewerMode = false;
       }
     }
