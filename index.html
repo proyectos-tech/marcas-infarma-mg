@@ -1536,6 +1536,51 @@
         alert('Marca eliminada exitosamente');
       }
 
+      // Download functions
+      function downloadBrandImage(brandId) {
+        const brand = brands.find(b => b.id === brandId);
+        if (!brand || !brand.brandPhoto) {
+          alert('No hay foto de marca disponible para descargar');
+          return;
+        }
+        
+        downloadBase64File(brand.brandPhoto, `${brand.productName || 'marca'}_foto.jpg`);
+      }
+      
+      function downloadLegalDoc(brandId) {
+        const brand = brands.find(b => b.id === brandId);
+        if (!brand || !brand.legalDoc) {
+          alert('No hay documento legal disponible para descargar');
+          return;
+        }
+        
+        // Determinar extensión basado en el formato del base64
+        const ext = brand.legalDoc.startsWith('data:application/pdf') ? 'pdf' : 'jpg';
+        downloadBase64File(brand.legalDoc, `${brand.productName || 'marca'}_legal.${ext}`);
+      }
+      
+      function downloadBase64File(base64Data, filename) {
+        // Convert base64 to blob
+        const arr = base64Data.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], {type: mime});
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+      }
+
       // Show lightbox
       function showLightbox(imageUrl) {
         document.getElementById('lightboxImage').src = imageUrl;
